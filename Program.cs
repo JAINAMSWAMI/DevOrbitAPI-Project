@@ -8,13 +8,14 @@ builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
 // Add services to the container.
 builder.Services.AddControllers();
+// ✅ Correct CORS setup for cookie-based JWT
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll",
-        builder => builder
-            .AllowAnyOrigin()
-            .AllowAnyMethod()
-            .AllowAnyHeader());
+    options.AddPolicy("FrontendPolicy", policy =>
+        policy.WithOrigins("https://localhost:7230") // your frontend URL
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials()); // allow cookies
 });
 
 builder.Services.AddAuthentication("Bearer")
@@ -42,7 +43,6 @@ builder.Services.AddSwaggerGen(); // ✅ MUST be before builder.Build()
 var app = builder.Build();
 
 
-app.UseCors("AllowAll");
 
 
 // Configure the HTTP request pipeline.
@@ -54,14 +54,20 @@ if (app.Environment.IsDevelopment())
 
 
 app.UseHttpsRedirection();
+
 app.UseStaticFiles();
 
 app.UseRouting();
+app.UseCors("FrontendPolicy");
+app.UseMiddleware<DevOrbitAPI.Middleware.JwtCookieMiddleware>();
+
+
 app.UseAuthentication();
-app.UseAuthorization();
+app.UseAuthorization(); 
+
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Users}/{action=AddUser}/{id?}");
+    pattern: "{controller=Auth}/{action=Login}/{id?}");
 
 app.Run();

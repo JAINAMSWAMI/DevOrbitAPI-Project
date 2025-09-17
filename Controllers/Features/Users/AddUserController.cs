@@ -43,7 +43,7 @@ namespace DevOrbitAPI.Controllers.Features.Users
 
                 if (result > 0)
                 {
-                    return Ok(new { success = true });
+                    return Ok(new { success = true, message = "User Added!"});
                 }
                 else
                 {

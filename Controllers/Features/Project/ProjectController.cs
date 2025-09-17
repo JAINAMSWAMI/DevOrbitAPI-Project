@@ -28,11 +28,11 @@ namespace DevOrbitAPI.Controllers.Features.Project
                 }
 
                 var role = User.FindFirst(ClaimTypes.Role)?.Value;
-                    
+
                 if (string.IsNullOrEmpty(role))
                     return Unauthorized(new { message = "Role not found something went wrong" });
 
-                AddProject project = new AddProject
+                Project_OPS project = new Project_OPS
                 {
                     Project_Name = projectDto.Project_Name,
                     Project_Description = projectDto.Project_Description,
@@ -46,13 +46,13 @@ namespace DevOrbitAPI.Controllers.Features.Project
                 }
 
                 int result = project.AddNewProject();
-                    if (result > 0)
-                    {
-                        return Ok(new { success = true });
+                if (result > 0)
+                {
+                    return Ok(new { success = true, message = "Project Created Successfully" });
 
-                    }
-                    else
-                    {
+                }
+                else
+                {
                     return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Failed to insert Project" });
 
                 }
@@ -64,5 +64,52 @@ namespace DevOrbitAPI.Controllers.Features.Project
 
             }
         }
+
+
+        [HttpGet("GetProject")]
+        public IActionResult GetProject(GetProjectDTO getProjectDTO)
+        {
+
+            try
+            {
+                
+
+                using (SqlConnection conn = new SqlConnection(new Operations().connectionString))
+                {
+                    conn.Open();
+                }
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+                GetProject project = new GetProject
+                {
+                    Project_ID = getProjectDTO.Project_ID,
+                    Project_Name = getProjectDTO.Project_Name,
+                    Project_Description = getProjectDTO.Project_Description,
+                    Project_Created_By = getProjectDTO.Project_Created_By,
+                    Project_Status = getProjectDTO.Project_Status,
+                    Project_Created_At = getProjectDTO.Project_Created_At,
+                    Project_Version = getProjectDTO.Project_Version
+                };
+
+                int result = project.GetProjectDB();
+                if (result > 0)
+                {
+                    return Ok(new { success = true, message = "Project Fetched Successfully" });
+
+                }
+                else
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Failed to Fetch Project" });
+
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
     }
 }
+

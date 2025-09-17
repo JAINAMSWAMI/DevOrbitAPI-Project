@@ -37,23 +37,36 @@ namespace DevOrbitAPI.Controllers.Features.Auth
                     if (user != null)
                     {
                         var token = GenerateJWTToken(user.User_Email, user.User_Role);
-                        return Ok(new { success = true, token = token, role = user.User_Role
-                        });
+
+
+                        var cookieOptions = new CookieOptions
+                        {
+                            HttpOnly = true,
+                            Secure = true,
+                            SameSite = SameSiteMode.None,
+                            Expires = DateTime.UtcNow.AddMinutes(30)
+
+                        };
+                        Response.Cookies.Append("Jwt", token, cookieOptions);
+                        return Ok(new { success = true, message = token, role = user.User_Role });
+
                     }
-                    
+
+
                 }
                return Unauthorized(new { success = false, message = "Invalid email or password." });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ex.Message);
+                return StatusCode(500, new { success = false, message = "Server error: " + ex.Message });
+
             }
         }
 
         private string GenerateJWTToken(string email, string role)
         {
-            var jwtsettings = _configuration.GetSection("JwtSetting");
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtsettings["Key"]));
+            var jwtsettings = _configuration.GetSection("JwtSetting"); //reads value from appsettings.json
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtsettings["Key"]));// creates a Symmetric Key using appsetting.json Key
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
